@@ -89,17 +89,17 @@
         "typed-protocols": "typed-protocols_2"
       },
       "locked": {
-        "lastModified": 1660654407,
-        "narHash": "sha256-P1U5guPrx9QTUz3aQG2EjgnMgRyqYzQojw4tC9W29O8=",
+        "lastModified": 1662104307,
+        "narHash": "sha256-5d4MPTScOSjXjzx22+pIacTxiRweMAw4RVZnW987Mzk=",
         "owner": "mlabs-haskell",
         "repo": "bot-plutus-interface",
-        "rev": "7ac4f6fe11ae32edc5d5894077fedcd552e180b8",
+        "rev": "67db4a65a5e4474829f3bf53a78591cc64004584",
         "type": "github"
       },
       "original": {
         "owner": "mlabs-haskell",
+        "ref": "vasil-compliant-v1.0.0",
         "repo": "bot-plutus-interface",
-        "rev": "7ac4f6fe11ae32edc5d5894077fedcd552e180b8",
         "type": "github"
       }
     },
@@ -335,7 +335,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "1.35.3-rc1",
+        "ref": "1.35.3",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -1337,17 +1337,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1660730745,
-        "narHash": "sha256-N1HOR3rqsXMIG7k12BsIyVZReJM9jHUW+gfvYBq/p84=",
+        "lastModified": 1663249493,
+        "narHash": "sha256-3uaNO2zpv2rO4l69rIT+FH6W2fbSnsC7vB86/SKgBec=",
         "owner": "mlabs-haskell",
         "repo": "plutip",
-        "rev": "8364c43ac6bc9ea140412af9a23c691adf67a18b",
+        "rev": "e67ff3903b6dff5067a29cd0b02c17e76b201df5",
         "type": "github"
       },
       "original": {
         "owner": "mlabs-haskell",
         "repo": "plutip",
-        "rev": "8364c43ac6bc9ea140412af9a23c691adf67a18b",
+        "rev": "e67ff3903b6dff5067a29cd0b02c17e76b201df5",
         "type": "github"
       }
     },
@@ -1371,17 +1371,17 @@
     "plutus-apps": {
       "flake": false,
       "locked": {
-        "lastModified": 1660652339,
-        "narHash": "sha256-0lCjJWMHYCFW62B5QAmkPakqNWdj2hJBqQP4AWHjBFE=",
-        "owner": "mikekeke",
+        "lastModified": 1661246964,
+        "narHash": "sha256-NuSwD6mjUEgBay2sIKRo6DUBualMQUDKfHQlsbYzKuk=",
+        "owner": "mlabs-haskell",
         "repo": "plutus-apps",
-        "rev": "efdb04b602ade22245769f7e52d07475b3e8c339",
+        "rev": "31bfd4c7fff5158c9f2618b76b68dbbae410221d",
         "type": "github"
       },
       "original": {
-        "owner": "mikekeke",
+        "owner": "mlabs-haskell",
         "repo": "plutus-apps",
-        "rev": "efdb04b602ade22245769f7e52d07475b3e8c339",
+        "rev": "31bfd4c7fff5158c9f2618b76b68dbbae410221d",
         "type": "github"
       }
     },
