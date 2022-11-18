@@ -19,59 +19,14 @@ import Ctl.Internal.Plutip.Types (PlutipConfig)
 import Ctl.Internal.Plutip.UtxoDistribution (withStakeKey)
 import Ctl.Internal.QueryM (ClusterSetup, emptyHooks)
 import Ctl.Internal.Test.E2E.Browser (withBrowser)
-import Ctl.Internal.Test.E2E.Feedback
-  ( BrowserEvent(ConfirmAccess, Sign, Success, Failure)
-  )
-import Ctl.Internal.Test.E2E.Feedback.Node
-  ( setClusterSetup
-  , subscribeToBrowserEvents
-  )
-import Ctl.Internal.Test.E2E.Options
-  ( BrowserOptions
-  , ClusterPortsOptions
-  , E2ECommand(UnpackSettings, PackSettings, RunBrowser, RunE2ETests)
-  , ExtensionOptions
-  , SettingsOptions
-  , TestOptions
-  , defaultPorts
-  )
-import Ctl.Internal.Test.E2E.Types
-  ( Browser
-  , ChromeUserDataDir
-  , E2ETest
-  , E2ETestRuntime
-  , E2EWallet(NoWallet, PlutipCluster, WalletExtension)
-  , ExtensionParams
-  , Extensions
-  , RunningE2ETest
-  , SettingsArchive
-  , SettingsRuntime
-  , TmpDir
-  , WalletExt(FlintExt, NamiExt, GeroExt, LodeExt, EternlExt)
-  , getE2EWalletExtension
-  , mkE2ETest
-  , mkExtensionId
-  , unExtensionId
-  )
-import Ctl.Internal.Test.E2E.Wallets
-  ( eternlConfirmAccess
-  , eternlSign
-  , flintConfirmAccess
-  , flintSign
-  , geroConfirmAccess
-  , geroSign
-  , lodeConfirmAccess
-  , lodeSign
-  , namiConfirmAccess
-  , namiSign
-  )
+import Ctl.Internal.Test.E2E.Feedback (BrowserEvent(ConfirmAccess, Sign, Success, Failure))
+import Ctl.Internal.Test.E2E.Feedback.Node (setClusterSetup, subscribeToBrowserEvents)
+import Ctl.Internal.Test.E2E.Options (BrowserOptions, ClusterPortsOptions, E2ECommand(UnpackSettings, PackSettings, RunBrowser, RunE2ETests), ExtensionOptions, SettingsOptions, TestOptions, defaultPorts)
+import Ctl.Internal.Test.E2E.Types (Browser, ChromeUserDataDir, E2ETest, E2ETestRuntime, E2EWallet(NoWallet, PlutipCluster, WalletExtension), ExtensionParams, Extensions, RunningE2ETest, SettingsArchive, SettingsRuntime, TmpDir, WalletExt(FlintExt, NamiExt, GeroExt, LodeExt, EternlExt), getE2EWalletExtension, mkE2ETest, mkExtensionId, unExtensionId)
+import Ctl.Internal.Test.E2E.Wallets (eternlConfirmAccess, eternlSign, flintConfirmAccess, flintSign, geroConfirmAccess, geroSign, lodeConfirmAccess, lodeSign, namiConfirmAccess, namiSign)
 import Ctl.Internal.Test.TestPlanM (TestPlanM, interpretWithConfig)
 import Ctl.Internal.Types.RawBytes (hexToRawBytes)
-import Ctl.Internal.Wallet.Key
-  ( PrivateStakeKey
-  , keyWalletPrivatePaymentKey
-  , keyWalletPrivateStakeKey
-  )
+import Ctl.Internal.Wallet.Key (PrivateStakeKey, keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
 import Data.Array (catMaybes, mapMaybe, nub)
 import Data.Array as Array
 import Data.BigInt as BigInt
@@ -93,32 +48,16 @@ import Data.Traversable (for, for_)
 import Data.Tuple (Tuple(Tuple))
 import Data.UInt as UInt
 import Effect (Effect)
-import Effect.Aff
-  ( Aff
-  , Canceler(Canceler)
-  , fiberCanceler
-  , launchAff
-  , launchAff_
-  , makeAff
-  , try
-  )
+import Effect.Aff (Aff, Canceler(Canceler), fiberCanceler, launchAff, launchAff_, makeAff, try)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+import Effect.Console as Console
 import Effect.Exception (Error, error, throw)
 import Effect.Ref as Ref
 import Mote (group, test)
 import Node.Buffer (fromArrayBuffer)
-import Node.ChildProcess
-  ( Exit(Normally, BySignal)
-  , SpawnOptions
-  , defaultExecOptions
-  , defaultSpawnOptions
-  , exec
-  , kill
-  , spawn
-  , stdout
-  )
+import Node.ChildProcess (Exit(Normally, BySignal), SpawnOptions, defaultExecOptions, defaultSpawnOptions, exec, kill, spawn, stdout)
 import Node.ChildProcess as ChildProcess
 import Node.Encoding as Encoding
 import Node.FS.Aff (exists, stat, writeFile)
@@ -168,6 +107,7 @@ ensureDir dir = do
 -- | Implements `run` command
 runE2ETests :: TestOptions -> E2ETestRuntime -> Aff Unit
 runE2ETests opts rt = do
+  liftEffect $ Console.log $ "running " <> show opts.tests
   interpretWithConfig
     ( SpecRunner.defaultConfig
         { timeout = Milliseconds <<< mul 1000.0 <<< Int.toNumber <$>
@@ -401,13 +341,22 @@ readExtensions wallets = do
 readBrowserRuntime
   :: Maybe (Array E2ETest) -> BrowserOptions -> Aff E2ETestRuntime
 readBrowserRuntime mbTests testOptions = do
+  liftEffect $ Console.log "started reading rt"
   browser <- maybe findBrowser pure testOptions.browser
+  liftEffect $ Console.log "346"
+  liftEffect $ Console.log $ "dir: " <> show testOptions.tmpDir <> " " <> show browser
+
   tmpDir <- createTmpDir testOptions.tmpDir browser
+  liftEffect $ Console.log "347"
 
   chromeUserDataDir <- findChromeProfile settingsOptions
+  liftEffect $ Console.log "35000"
   ensureChromeUserDataDir chromeUserDataDir
+  liftEffect $ Console.log "123123"
   settingsArchive <- findSettingsArchive settingsOptions
   unpackSettings settingsArchive chromeUserDataDir
+
+  liftEffect $ Console.log "353"
 
   wallets <- readExtensions testOptions.wallets
 
@@ -423,6 +372,7 @@ readBrowserRuntime mbTests testOptions = do
   -- Must be executed before extractExtension call
   for_ (sanityCheck mbTests runtime) (throw >>> liftEffect)
   for_ wallets $ extractExtension tmpDir
+  liftEffect $ Console.log "finished reading rt"
   pure runtime
   where
   settingsOptions = build
@@ -782,16 +732,20 @@ createTmpDir mbOptionsTmpDir browser = do
   mbTmpDir <- maybe (liftEffect $ lookupEnv "E2E_TMPDIR") (pure <<< Just)
     mbOptionsTmpDir
   for_ mbTmpDir ensureExists
+  liftEffect $ Console.log $ "735: " <> show mbTmpDir
   maybe createNew createNewSubdir mbTmpDir
   where
   ensureExists dir =
     dir <$ spawnAndCollectOutput "mkdir" [ "-p", dir ] defaultSpawnOptions
       defaultErrorReader
   createNewSubdir prefix = do
+    liftEffect $ Console.log $ "742"
     uniqPart <- execAndCollectOutput "mktemp -du e2e.XXXXXXX"
+    liftEffect $ Console.log $ "744"
     void $ spawnAndCollectOutput "mkdir" [ "-p", prefix <</>> uniqPart ]
       defaultSpawnOptions
       defaultErrorReader
+    liftEffect $ Console.log $ "748"
     pure $ prefix <</>> uniqPart
   createNew = do
     realPath <- spawnAndCollectOutput "which" [ browser ]
@@ -815,12 +769,18 @@ execAndCollectOutput_
   -> (Either Error String -> Effect Unit)
   -> Effect Canceler
 execAndCollectOutput_ shellCmd cont = do
+  Console.log $ "exec 772"
   child <- exec shellCmd defaultExecOptions (const $ pure unit)
+  Console.log $ "exec 773"
   ref <- Ref.new ""
   ChildProcess.onExit child case _ of
-    Normally 0 -> Ref.read ref >>= String.trim >>> Right >>> cont
+    Normally 0 -> do
+      output <- Ref.read ref
+      Console.log $ "exited +" <> output
+      Ref.read ref >>= String.trim >>> Right >>> cont
     exitStatus -> do
       output <- Ref.read ref
+      Console.log $ "exited -" <> output
       cont $ Left
         ( error $ "Command failed: " <> shellCmd <> " (" <> show exitStatus
             <> ")."
@@ -828,14 +788,18 @@ execAndCollectOutput_ shellCmd cont = do
               if String.null output then ""
               else " Output collected so far: " <> output
         )
+  Console.log $ "exec 786"
   onDataString (stdout child) Encoding.UTF8
     \str -> do
+      Console.log $ "output " <> str
       void $ Ref.modify (_ <> str) ref
-  pure $ Canceler $ const $ liftEffect $ kill SIGINT child
+  Console.log $ "exec 789"
+  pure $ Canceler $ const $ liftEffect $ pure unit -- $ kill SIGINT child
 
 -- | Run a shell command and collect the output.
 execAndCollectOutput :: String -> Aff String
-execAndCollectOutput cmd = makeAff (execAndCollectOutput_ cmd)
+execAndCollectOutput cmd = do
+  makeAff (execAndCollectOutput_ cmd) <* liftEffect (Console.log "797")
 
 spawnAndCollectOutput_
   :: String

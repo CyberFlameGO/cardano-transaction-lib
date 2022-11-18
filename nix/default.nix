@@ -266,8 +266,8 @@ let
       }
     );
 
-  runE2ETest = 
-    { 
+  runE2ETest =
+    {
       # The name of the main Purescript module
       testMain ? "Test.Ctl.E2E"
       # Can be used to override the name of the resulting derivation
@@ -282,7 +282,7 @@ let
     , buildInputs ? [ ]
     , ...
     }@args:
-    let 
+    let
         bundledPursProject = bundlePursProject {
               main = "Ctl.Examples.ByUrl";
               entrypoint = "examples/index.js";
@@ -297,20 +297,34 @@ let
           ogmios-datum-cache
           plutip-server
           chromium
+          strace
           nodePackages.live-server
           # Utils needed by E2E test code
           which # used to check for browser availability
           gnutar # used unpack settings archive within E2E test code
           curl
+          mktemp
+          bash # used to actually run e2e-ci.env
+          nodejs # used to run the bundled test suite
         ] ++ [ pkgs.ctl-server ]
           ++ (args.buildInputs or [ ]);
         NODE_PATH = "${nodeModules}/lib/node_modules";
     } // env)
     ''
       mkdir $out
-
-      cd ${project}
-      source ${project}/test/e2e-ci.env
+      cd $out
+      chmod -R +rwx .
+      export E2E_TESTS="
+# Plutip tests are executed on a temporary cluster started by the test engine
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:OneShotMinting
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:SignMultiple
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:AlwaysSucceeds
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:AlwaysSucceedsV2
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:AlwaysMints
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:Pkh2Pkh
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:SendsToken
+plutip:http://127.0.0.1:4008/?plutip-nami-mock:MintsMultipleTokens
+"
 
       export E2E_SETTINGS_ARCHIVE="${project}/test-data/empty-settings.tar.gz"
       export E2E_CHROME_USER_DATA="$out/test-data/chrome-user-data"
@@ -322,12 +336,9 @@ let
       export OGMIOS_DATUM_CACHE_PORT=10005
       export CTL_SERVER_PORT=8088
       export POSTGRES_PORT=5438
+      export E2E_TMPDIR=/tmp
       # export PUPPETEER_EXECUTABLE_PATH='${pkgs.chromium}/bin/chromium'
       export XDG_CONFIG_HOME="$out/test-data/chrome-user-data"
-
-
-      # python -m http.server 4008 --directory ${bundledPursProject}/dist &
-
       ${pkgs.bubblewrap}/bin/bwrap \
         --unshare-all \
         --share-net \
@@ -339,22 +350,23 @@ let
         --dir /tmp \
         --dev /dev \
         --setenv TMPDIR /tmp \
+        --setenv E2E_SETTINGS_ARCHIVE "${project}/test-data/empty-settings.tar.gz" \
+        --setenv E2E_CHROME_USER_DATA "$out/test-data/chrome-user-data" \
+        --setenv E2E_TEST_TIMEOUT 200 \
+        --setenv E2E_BROWSER chromium \
+        --setenv PLUTIP_PORT 8087 \
+        --setenv OGMIOS_PORT 1345 \
+        --setenv OGMIOS_DATUM_CACHE_PORT 10005 \
+        --setenv CTL_SERVER_PORT 8088 \
+        --setenv POSTGRES_PORT 5438 \
         --setenv XDG_RUNTIME_DIR /tmp \
+        --setenv E2E_TMPDIR /tmp \
+        --setenv XDG_CONFIG_HOME "$out/test-data/chrome-user-data" \
+        --setenv E2E_TESTS "$E2E_TESTS" \
         --bind . /data \
         --chdir /data  \
-        -- live-server ${bundledPursProject}/dist --port=4008 &
+        -- bash ${project}/test/e2e-ci.env ${project} ${bundledPursProject} "/tmp"
 
-      sleep 5
-
-      # ls -la ${bundledPursProject}/dist
-      curl http://127.0.0.1:4008/index.html
-
-
-      cd $out
-      chmod -R +rwx .
-
-     # BROWSER_RUNTIME=1 webpack-dev-server --progress
-     ${nodejs}/bin/node -e 'require("${project}/output/${testMain}").main()' e2e-test run
     ''
     ;
 
